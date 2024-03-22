@@ -10,35 +10,40 @@ app.get("/", function (req, res) {
   res.sendFile(__dirname + '/views/index.html');
 });
 
+app.get("/api/:date?", function (req, res) {
+  let date = req.params.date;
 
-app.get("/api/timestamp", (req, res)=>{
-  let date = new Date();
+  let unixDate;
+  let dateObj;
+  let utcDate;
 
-  return res.json({
-    'unix': date.getTime(),
-    'utc': date.toUTCString()
-  });
-});
+  // Test whether the input date is a number
+  let isUnix = /^\d+$/.test(date);
 
-app.get("/api/timestamp/:date", (req, res)=>{
-  let resultDate='';
-
-  let inputDate = new Date(req.params.date);
-
-  if(inputDate.toString() == "Invalid Date"){
-    inputDate = new Date(parseInt(req.params.date));
+  // If no date specified, use the current date
+  if (!date) {
+    dateObj = new Date();
+  }
+  // If the date is a Unix Timestamp
+  else if (date && isUnix) {
+    unixDate = parseInt(date);
+    dateObj = new Date(unixDate);
+  }
+  // If the date is not a unix time stamp
+  else if (date && !isUnix) {
+    dateObj = new Date(date);
   }
 
-  if(inputDate.toString() == "Invalid Date") {
-    return res.json({error: "Invalid Date"});
-  } else {
-    resultDate = { unix: inputDate.getTime(),
-      utc: inputDate.toUTCString() };
+  if (dateObj.toString() === "Invalid Date") {
+    res.json({ error: "Invalid Date" });
+    return;
   }
-  return res.json(resultDate);
+
+  unixDate = dateObj.getTime();
+  utcDate = dateObj.toUTCString();
+
+  res.json({ unix: unixDate, utc: utcDate });
 });
-
-
 
 var listener = app.listen(process.env.PORT || 3000, function () {
   console.log('Your app is listening on port ' + listener.address().port);
